@@ -10,8 +10,8 @@
 <%@ page import="org.jahia.services.content.nodetypes.ExtendedPropertyDefinition" %>
 
 <%
-    // Generate a CSV with the following format => module ; type ; super type ; properties ; child ;
-    out.println("module;type;supertype;properties");
+    // Generate a CSV with the following format => module ; type ; namespace ;  description ; super type ; properties ; is mixin ?; is abstract ?
+    out.println("module;type;namespace;description;supertype;properties;mixin;abstract");
 
     final NodeTypeRegistry nodeTypeRegistry = NodeTypeRegistry.getInstance();
     List<String> moduleNameList = nodeTypeRegistry.getSystemIds();
@@ -42,12 +42,15 @@
                         propertyConcat += "|";
                     }
                     propertyConcat += property.getName();
-                    propertyConcat += "@";
+                    propertyConcat += " ( ";
                     propertyConcat += javax.jcr.PropertyType.nameFromValue(property.getRequiredType());
+                    propertyConcat += " ) ";
                 }
             }
-
-            out.println(moduleName + ";" + type.getName() + ";" + superTypeConcat + ";" + propertyConcat);
+            
+            String namespace = type.getNameObject().getPrefix() + "@" + type.getNameObject().getUri();
+            
+            out.println(moduleName + ";" + type.getName() + ";" + namespace + ";" + type.getDescription(java.util.Locale.ENGLISH) + ";" + superTypeConcat + ";" + propertyConcat + ";" + type.isMixin() + ";" + type.isAbstract());
         }
     }
 %>

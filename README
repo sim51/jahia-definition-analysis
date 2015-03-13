@@ -19,24 +19,59 @@ In this part, we will create the graph database with the Jahia CSV file
  * Extract it to a folder (NEO4J_HOME)
  * Start it : NEO4J_HOME/bin/neo4 start
  * Run the neo4j shell : bin/neo4j-shell (Instead of the shell, you can use the neo4j browser : http://localhost:74747)
- * Execute the following script :
+ * Execute the following scripts :
+ 
+### Graph schema
+
 ```
+// Create constraint for the graph
 CREATE CONSTRAINT ON (t:Type) ASSERT t.name IS UNIQUE;
 CREATE CONSTRAINT ON (m:Module) ASSERT m.name IS UNIQUE;
+CREATE CONSTRAINT ON (ns:Namespace) ASSERT ns.uri IS UNIQUE;
+```
 
+### Graph main datas
+
+```
 USING PERIODIC COMMIT 1000
 LOAD CSV WITH HEADERS FROM "http://localhost:8080/resources/definitions_csv.jsp" AS line FIELDTERMINATOR ';'
 
-CREATE (t:Type  {name: line.type, properties:split(line.properties,"|")})
+// create (if needed) the node type
+MERGE (t:Type  {name: line.type})
+SET t.description= line.description
+SET t.mixin = line.mixin
+SET t.abstract = line.abstract
+SET t.properties = split(line.properties,"|")
 
+// create the module node if needed and make the relation with the node type
 MERGE (m:Module {name: line.module})
+CREATE (t)-[:IS_DEFINED_IN]->(m)
 
-CREATE (m)-[:DEFINED]->(t)
+// create the namespace node if needed and make the relation with the node type
+MERGE (ns:Namespace {name: split(line.namespace, '@')[0], uri: split(line.namespace, '@')[1] })
+CREATE (t)-[:HAS_NAMESPACE]->(ns)
 
+// Create relation between current type and it's parent type node
 FOREACH (supertype in split(line.supertype,"|") |
   MERGE (st:Type {name: supertype})
   CREATE (st)-[:IS_PARENT_OF]->(t)
 );
 ```
 
+### Adding some label
+
+```
+MATCH (t:Type { mixin:'true' }) SET  t :Mixin;
+MATCH (t:Type { abstract:'true' }) SET  t :Abstract;
+MATCH (t:Type) REMOVE t.mixin, t.abstract;
+
+```
 Great, now we have our graph !
+
+
+### Some helpfull cypher query
+
+ * Delete all the graph  : ```MATCH (n),(m) OPTIONAL MATCH (n)-[r]->(m) DELETE n,r,m```
+ * Getting properties of a node type : ```MATCH (st:Type)-[*]->(t:Type) WHERE t.name="nnt:article" AND st.properties IS NOT NULL  RETURN DISTINCT st.properties```
+ * Getting all namespace created by a company : ```MATCH (n:Namespace) WHERE n.uri=~".*logisima.com.*" RETURN n```
+ 
