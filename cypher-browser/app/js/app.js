@@ -5,7 +5,10 @@ var s, // sigma variable
     query, // cypher query
     server, // url of neo4j server
     forceAtlas2Time, // time after each we have to kill the forceAtalas2 algo
-    history,
+    historyList = [],
+    favoriteList = [],
+    labels = [],
+    types = [],
     editor; // Query history
 
 /**
@@ -22,10 +25,14 @@ function init() {
         theme: "neo"
     });
     // Adding some key map that permit to run & save the query.
-    editor.addKeyMap( {
-            "Ctrl-Enter": function () { executeQuery(); },
-            "Alt-Enter": function () { executeQuery(); }
-        }, false);
+    editor.addKeyMap({
+        "Ctrl-Enter": function () {
+            executeQuery();
+        },
+        "Alt-Enter": function () {
+            executeQuery();
+        }
+    }, false);
 
     // Init sigmajs
     // ==================================
@@ -40,8 +47,10 @@ function init() {
     // ==================================
     // Run query on the run button !
     document.getElementById('run').onclick = executeQuery;
+    // Save the query
+    document.getElementById('save').onclick = saveQuery;
     // Panel navigation
-    for ( var i =0 ; i < document.getElementsByClassName('tabsheet-link').length ; i++) {
+    for (var i = 0; i < document.getElementsByClassName('tabsheet-link').length; i++) {
         document.getElementsByClassName('tabsheet-link')[i].onclick = panelSelectTabsheet;
     }
 }
@@ -51,10 +60,10 @@ function init() {
  *
  * @param labels {Array of String}  Array of label
  */
-function panelGraphWriteLabels(labels) {
+function panelGraphUpdateLabels(labels) {
     var i = 0,
         html = '';
-    for(i ; i < labels.length ; i++) {
+    for (i; i < labels.length; i++) {
         html += "<li>" + labels[i] + "</li>";
     }
     document.getElementById('labels').innerHTML = html;
@@ -65,11 +74,11 @@ function panelGraphWriteLabels(labels) {
  *
  * @param types {Array of String}  Array of type
  */
-function panelGraphWriteTypes(types) {
+function panelGraphUpdateTypes(types) {
     var i = 0,
         html = '';
-    for(i ; i < types.length ; i++) {
-        html += "<li>" + types[i]+ "</li>";
+    for (i; i < types.length; i++) {
+        html += "<li>" + types[i] + "</li>";
     }
     document.getElementById('types').innerHTML = html;
 }
@@ -119,13 +128,58 @@ function onGraphDataLoaded(s, g) {
 }
 
 /**
+ * Function to update the history panel.
+ */
+function panelHistoryUpdate() {
+    // adding th current query to the history
+    historyList.push(
+        {
+            query: query,
+            time: new Date(),
+            display: editor.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
+        }
+    );
+
+    var i = (historyList.length -1),
+        html = '';
+
+    for (i; i >= 0; i--) {
+        html += "<li>" + historyList[i].display + "</li>";
+    }
+    document.getElementById('history-list').innerHTML = html;
+}
+
+/**
  * Function that execute & display the cypher query.
  */
 function executeQuery() {
     s.graph.clear();
     s.refresh();
     readConfigData();
+    panelHistoryUpdate();
     sigma.neo4j.cypher(server, query, s, onGraphDataLoaded);
+}
+
+/**
+ * Function that save the current query to favorite.
+ */
+function saveQuery() {
+    favoriteList.push(
+        {
+            title: '',
+            query: editor.getValue(),
+            display: editor.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
+        }
+    );
+
+    var i = 0,
+        html = '';
+
+    for (i; i < favoriteList.length ; i++) {
+        html += "<li>" + favoriteList[i].display + "</li>";
+    }
+    document.getElementById('favorite-list').innerHTML = html;
+
 }
 
 /**
@@ -137,25 +191,25 @@ function panelGraphUpdate() {
     document.getElementById('numberOfEdge').innerHTML = '' + s.graph.edges().length;
 
     // update labels
-    sigma.neo4j.getLabels(server, panelGraphWriteLabels);
+    sigma.neo4j.getLabels(server, panelGraphUpdateLabels);
     // update types
-    sigma.neo4j.getTypes(server, panelGraphWriteTypes);
+    sigma.neo4j.getTypes(server, panelGraphUpdateTypes);
 }
 
 /**
  * Function that managed selection of panel tab.
  */
 function panelSelectTabsheet() {
-    document.getElementById('graph').classList.remove('active');
-    document.getElementById('favorite').classList.remove('active');
-    document.getElementById('history').classList.remove('active');
-    document.getElementById('config').classList.remove('active');
+    document.getElementById('graph-tab').classList.remove('active');
+    document.getElementById('favorite-tab').classList.remove('active');
+    document.getElementById('history-tab').classList.remove('active');
+    document.getElementById('config-tab').classList.remove('active');
     this.parentNode.classList.add('active');
 }
 
 /**
  * When document is ready , we initialize the application.
  */
-window.onload = function() {
+window.onload = function () {
     init();
 };

@@ -58,7 +58,7 @@
     <div class="container-fluid">
         <div id="panel">
             <ul class="list-unstyled">
-                <li id="graph" class="active">
+                <li id="graph-tab" class="active">
                     <a class="tabsheet-link" href="#"><i class="fa fa-pie-chart fa-2x"></i></a>
                     <div  class="tabsheet">
                         <fieldset>
@@ -78,17 +78,23 @@
                         </fieldset>
                     </div>
                 </li>
-                <li id="favorite">
-                    <a class="tabsheet-link" href="#"><i class="fa fa-star fa-2x"></i></a>
-                    <div  class="tabsheet">
-                    </div>
-                </li>
-                <li id="history">
+                <li id="history-tab">
                     <a class="tabsheet-link" href="#"><i class="fa fa-history fa-2x"></i></a>
                     <div class="tabsheet">
+                        <ul id="history-list" class="list-unstyled cm-s-neo">
+
+                        </ul>
                     </div>
                 </li>
-                <li id="config" class="pull-right ">
+                <li id="favorite-tab">
+                    <a class="tabsheet-link" href="#"><i class="fa fa-star fa-2x"></i></a>
+                    <div  class="tabsheet">
+                        <ul id="favorite-list" class="list-unstyled cm-s-neo">
+
+                        </ul>
+                    </div>
+                </li>
+                <li id="config-tab" class="pull-right ">
                     <a class="tabsheet-link" href="#"><i class="fa fa-cogs fa-2x"></i></a>
                     <div class="tabsheet">
                         <label for="server">Server URL</label>
@@ -106,6 +112,7 @@
         <div id="cypher">
             <textarea id="cypher-query" class="center-block">MATCH (n) OPTIONAL MATCH (n)-[r]->(m) RETURN n,r,m LIMIT 100</textarea>
             <ul class="pull-right list-inline list-unstyled">
+                <li><button id="save" class="btn btn-default"><i class="fa fa-save fa-3"></i></button></li>
                 <li><button id="run" class="btn btn-default"><i class="fa fa-play fa-3"></i></button></li>
             </ul>
 
