@@ -19,7 +19,7 @@ In this part, we will create the graph database with the Jahia CSV file
  * Extract it to a folder (NEO4J_HOME)
  * Start it : NEO4J_HOME/bin/neo4 start
  * Run the neo4j shell : bin/neo4j-shell (Instead of the shell, you can use the neo4j browser : http://localhost:74747)
- * Execute the following scripts :
+ * Execute bellow scripts
  
 ### Graph schema
 
@@ -66,12 +66,96 @@ MATCH (t:Type { abstract:'true' }) SET  t :Abstract;
 MATCH (t:Type) REMOVE t.mixin, t.abstract;
 
 ```
+
 Great, now we have our graph !
 
 
 ### Some helpfull cypher query
+ 
+#### Query on type
+ 
+ * Properties of a node type (with the inheritance) : 
+```
+MATCH 
+	(st:Type)-[*]->(t:Type) 
+WHERE 
+	t.name="nnt:article" AND 
+	st.properties IS NOT NULL 
+UNWIND 
+	st.properties as property
+WITH 
+	DISTINCT property
+RETURN 
+	property
+ORDER BY property ASC
+```
+ 
+ * Abstract type list : MATCH (t:Type:Abstract) RETURN t
+ 
+ * Mixin type list : MATCH (t:Type:Mixin) RETURN t
+ 
+ * Graph of type : 
+```
+MATCH (t:Type) 
+OPTIONAL MATCH (st:Type)-[r:IS_PARENT_OF]->(t)
+RETURN st, r, t
+```
+
+#### Query on namespace
+
+ * All namespace created by a company : ```MATCH (n:Namespace) WHERE n.uri=~".*logisima.com.*" RETURN n```
+ * All module that used a specific namespace : 
+```
+MATCH 
+	(t:Type)-[:HAS_NAMESPACE]->(n:Namespace),
+	(t)-[:IS_DEFINED_IN]->(m:Module)
+WHERE
+	n.uri =~ "*logisima.com.*"
+RETURN DISTINCT m
+```
+
+ * Types of the namespace : 
+ ```
+MATCH 
+	(t:Type)-[:HAS_NAMESPACE]->(n:Namespace)
+WHERE
+	n.uri =~ "*logisima.com.*"
+RETURN DISTINCT t
+ ```
+ 
+#### Query on module
+
+ * Mixin : 
+```
+MATCH (t:Type:Mixin)-[:IS_DEFINED_IN]->(m:Module)
+WHERE m.name="system-jahia"
+RETURN t
+```
+
+* Abstract : 
+```
+MATCH (t:Type:Abstract)-[:IS_DEFINED_IN]->(m:Module)
+WHERE m.name="system-jahia"
+RETURN t
+```
+
+* All type in a module
+```
+MATCH (t:Type)-[:IS_DEFINED_IN]->(m:Module)
+WHERE m.name="system-jahia"
+RETURN t
+```
+
+ * Namespaces :
+```
+MATCH 
+  (t:Type)-[:IS_DEFINED_IN]->(m:Module),
+  (t)-[:HAS_NAMESPACE]->(ns:Namespace)
+WHERE m.name="system-jahia"
+RETURN DISTINCT ns
+```
+
+ * Module dependencies : 
+#### Miscellaneous
 
  * Delete all the graph  : ```MATCH (n),(m) OPTIONAL MATCH (n)-[r]->(m) DELETE n,r,m```
- * Getting properties of a node type : ```MATCH (st:Type)-[*]->(t:Type) WHERE t.name="nnt:article" AND st.properties IS NOT NULL  RETURN DISTINCT st.properties```
- * Getting all namespace created by a company : ```MATCH (n:Namespace) WHERE n.uri=~".*logisima.com.*" RETURN n```
- 
