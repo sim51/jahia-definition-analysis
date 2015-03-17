@@ -10,8 +10,12 @@
     /**
      * The init function.
      */
-    tank.panels.classes.favorite = function () {
+    tank.panels.classes.favorite = function (tank) {
         this.list = [];
+
+        // init object by calling refresh method
+        var _self = this;
+        _self.refresh();
     };
 
     /**
@@ -20,8 +24,7 @@
     tank.panels.classes.favorite.prototype.refresh = function () {
 
         var i = 0, html = '';
-
-        for (i; i >= 0; i--) {
+        for (i; i < this.list.length; i++) {
             html += "<li><a href=\"#\" class=\"favorite-query\" data-query-id=\"" + i + "\">" + this.list[i].display + "</a></li>";
         }
         document.getElementById('favorite-list').innerHTML = html;
@@ -40,22 +43,21 @@
         // =======================
         document.getElementById('save').onclick = function () {
 
-            // adding the current query to the history
-            this.list.push({
-                query: tank.component.codemirror.getValue(),
-                display: tank.component.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
+            // adding the current query to favorite
+            tank.instance().panels.favorite.list.push({
+                query: tank.instance().components.codemirror.getValue(),
+                display: tank.instance().components.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
             });
 
-            this.refresh();
+            tank.instance().panels.favorite.refresh();
         };
 
         // Click on an favorite query
         // ===========================
         var onclick = function() {
             var id = this.getAttribute("data-query-id");
-            tank.component.codemirror.setValue(tank.panels.favorite.var.list[id].query);
-            // FIXME : change this method !!!
-            executeQuery();
+            tank.instance().components.codemirror.setValue(tank.instance().panels.favorite.list[id].query);
+            tank.instance().executeQuery();
         };
         for (var j = 0; j < document.getElementsByClassName('favorite-query').length; j++) {
 

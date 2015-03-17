@@ -11,8 +11,10 @@
 
         // List all enabled panel
         panels : ['config', 'favorite', 'graph', 'history' ],
-        component : ['codemirror', 'sigmajs']
+        components : ['codemirror', 'sigmajs'],
 
+        server : 'http://localhost:7474',
+        forceAtlas2Time : 50000
     };
 
     // Export the previously designed settings:

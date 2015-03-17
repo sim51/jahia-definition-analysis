@@ -5,14 +5,18 @@
         throw 'tank is not declared';
 
     // Create panel package
-    sigma.utils.pkg('tank.components');
+    sigma.utils.pkg('tank.components.classes.sigmajs');
 
     // init sigmajs
-    tank.components.sigmajs = new sigma({
-        renderer: {
-            container: document.getElementById('graph-container'),
-            type: 'canvas'
-        }
-    });
+    tank.components.classes.sigmajs = function() {
+        var s = new sigma({
+            renderer: {
+                container: document.getElementById('graph-container'),
+                type: 'canvas'
+            }
+        });
+
+        return s;
+    };
 
 }).call(this);

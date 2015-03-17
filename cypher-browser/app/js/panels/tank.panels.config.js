@@ -11,14 +11,20 @@
      * The init function.
      */
     tank.panels.classes.config = function () {
-        // nothing to do
+        // init object by calling refresh method
+        var _self = this;
+        _self.refresh();
     };
 
     /**
      * The refresh function.
      */
     tank.panels.classes.config.prototype.refresh = function() {
-        // nothing to do
+        for(var key in tank.settings ) {
+            if (document.getElementById(key)) {
+                document.getElementById(key).value = tank.settings[key];
+            }
+        }
     };
 
     /**
@@ -29,7 +35,8 @@
             for (var j = 0; j < document.getElementsByClassName('tank-settings').length; j++) {
                 var name = document.getElementsByClassName('tank-settings')[j].getAttribute('id');
                 var value = document.getElementsByClassName('tank-settings')[j].value;
-                tank.settings[name] = value;
+                tank.instance().settings[name] = value;
+                alert(tank.settings);
             }
         };
 

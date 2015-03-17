@@ -1,53 +1,3 @@
-
-
-
-/**
- * Funtcion that stop the forceAtlas2 algo.
- *
- * @param sig {Sigma} The sigmajs instance
- */
-function stopForceAtlas2(sig) {
-    sig.stopForceAtlas2();
-}
-
-/**
- * Callback function for neo4j execute sypher method.
- *
- * @param s {Sigma} The sigmajs instance
- * @param g {Graph} The graph object representation
- */
-function onGraphDataLoaded(s, g) {
-    s.startForceAtlas2({
-        linLogMode: false,
-        outboundAttractionDistribution: false,
-        adjustSizes: true,
-        edgeWeightInfluence: 0,
-        scalingRatio: 1,
-        strongGravityMode: false,
-        gravity: 1,
-        slowDown: 1,
-        barnesHutOptimize: false,
-        barnesHutTheta: 0.5,
-        startingIterations: 1,
-        iterationsPerRender: 1
-    });
-    s.refresh();
-    window.setTimeout(stopForceAtlas2, forceAtlas2Time, s);
-    panelGraphUpdate();
-}
-
-/**
- * Function that execute & display the cypher query.
- */
-function executeQuery() {
-    s.graph.clear();
-    s.refresh();
-    readConfigData();
-    panelHistoryUpdate();
-    sigma.neo4j.cypher(server, query, s, onGraphDataLoaded);
-}
-
-
 ;(function (undefined) {
     'use strict';
 
@@ -257,18 +207,19 @@ function executeQuery() {
 ;(function (undefined) {
     'use strict';
 
-    var __instances = {};
+    var __instance = {};
 
     var tank = function (conf) {
 
         // Private attributes:
-        // *******************
-        var _conf = conf || {}, i;
+        // =======================
+        var _self = this, _conf = conf || {}, i;
 
+        this.query = 'MATCH (n) OPTIONAL MATCH (n)-[r]->(m) RETURN n,r,m LIMIT 100';
         this.settings = tank.settings;
 
         Object.defineProperty(this, 'components', {
-            value: {},
+            value: tank.components,
             configurable: true
         });
         Object.defineProperty(this, 'panels', {
@@ -277,16 +228,21 @@ function executeQuery() {
         });
 
         // initiate components
-        for (var component in this.settings.components) {
-                //this.components[component] = new tank.components.classes}[component]();
+        var name;
+        for (i in  this.settings.components) {
+            name = this.settings.components[i];
+            this.components[name] = new tank.components.classes[name]();
         }
 
         // initiate panels
         for (i in this.settings.panels) {
-            var name = this.settings.panels[i];
-            this.panels[name] = new tank.panels.classes[name]();
+            name = this.settings.panels[i];
+            this.panels[name] = new tank.panels.classes[name](_self);
         }
 
+        // Panel navigation
+        // ========================
+        // FIXME : be more generic
         var onClick = function () {
             document.getElementById('graph-tab').classList.remove('active');
             document.getElementById('favorite-tab').classList.remove('active');
@@ -294,13 +250,65 @@ function executeQuery() {
             document.getElementById('config-tab').classList.remove('active');
             this.parentNode.classList.add('active');
         };
-
-        // Panel navigation
         for (i = 0; i < document.getElementsByClassName('tabsheet-link').length; i++) {
             document.getElementsByClassName('tabsheet-link')[i].onclick = onClick;
         }
 
-        return this;
+        // Register event onclick on the run button
+        document.getElementById('run').onclick = function () {
+            _self.executeQuery();
+        };
+
+        __instance = this;
+
+    };
+
+    /**
+     * Execute the current cypher query.
+     */
+    tank.prototype.executeQuery = function () {
+        tank.components.sigmajs.graph.clear();
+        tank.components.sigmajs.refresh();
+        sigma.neo4j.cypher(
+            this.settings.server,
+            this.query,
+            this.components.sigmajs,
+            this.onGraphDataLoaded
+        );
+
+        // Dispatch the 'run-query' event
+        window.dispatchEvent(new Event("run-query"));
+
+    };
+
+    /**
+     * Callback function for sigma & neo4j execute cypher method.
+     *
+     * @param s {Sigma} The sigmajs instance
+     * @param g {Graph} The graph object representation
+     */
+    tank.prototype.onGraphDataLoaded = function(s, g) {
+        s.startForceAtlas2({
+            linLogMode: false,
+            outboundAttractionDistribution: false,
+            adjustSizes: true,
+            edgeWeightInfluence: 0,
+            scalingRatio: 1,
+            strongGravityMode: false,
+            gravity: 1,
+            slowDown: 1,
+            barnesHutOptimize: false,
+            barnesHutTheta: 0.5,
+            startingIterations: 1,
+            iterationsPerRender: 1
+        });
+        s.refresh();
+        window.setTimeout(function() {
+            tank.components.sigmajs.stopForceAtlas2();
+        }, tank.settings.forceAtlas2Time, s);
+
+        // Dispatch the 'run-query' event
+        window.dispatchEvent(new Event("graph-data-loaded"));
     };
 
     /**
@@ -310,10 +318,8 @@ function executeQuery() {
      * @return {object}     The related instance or a clone of the instances
      *                      object.
      */
-    tank.instances = function (id) {
-        return arguments.length ?
-            __instances[id] :
-            sigma.utils.extend({}, __instances);
+    tank.instance = function () {
+        return __instance;
     };
 
     /**
@@ -339,8 +345,10 @@ function executeQuery() {
 
         // List all enabled panel
         panels : ['config', 'favorite', 'graph', 'history' ],
-        component : ['codemirror', 'sigmajs']
+        components : ['codemirror', 'sigmajs'],
 
+        server : 'http://localhost:7474',
+        forceAtlas2Time : 50000
     };
 
     // Export the previously designed settings:
@@ -355,28 +363,33 @@ function executeQuery() {
         throw 'tank is not declared';
 
     // Create panel package
-    sigma.utils.pkg('tank.components');
+    sigma.utils.pkg('tank.components.classes.codemirror');
 
     // init codemirror
-    tank.components.codemirror = CodeMirror.fromTextArea(document.getElementById('cypher-query'), {
-        lineNumbers: true,
-        indentWithTabs: true,
-        smartIndent: true,
-        mode: "cypher",
-        theme: "neo"
-    });
-    // Adding some key map that permit to run & save the query.
-    tank.components.codemirror.addKeyMap(
-        {
-            "Ctrl-Enter": function () {
-               alert('help');
+    tank.components.classes.codemirror = function() {
+
+        var editor = CodeMirror.fromTextArea(document.getElementById('cypher-query'), {
+            lineNumbers: true,
+            indentWithTabs: true,
+            smartIndent: true,
+            mode: "cypher",
+            theme: "neo"
+        });
+
+        // Adding some key map that permit to run & save the query.
+        editor.addKeyMap(
+            {
+                "Ctrl-Enter": function () {
+                    tank.instance().executeQuery();
+                },
+                "Alt-Enter": function () {
+                    tank.instance().executeQuery();
+                }
             },
-            "Alt-Enter": function () {
-                alert('help');
-            }
-        },
-        false
-    );
+            false
+        );
+        return editor;
+    };
 
 }).call(this);
 ;(function (undefined) {
@@ -386,15 +399,19 @@ function executeQuery() {
         throw 'tank is not declared';
 
     // Create panel package
-    sigma.utils.pkg('tank.components');
+    sigma.utils.pkg('tank.components.classes.sigmajs');
 
     // init sigmajs
-    tank.components.sigmajs = new sigma({
-        renderer: {
-            container: document.getElementById('graph-container'),
-            type: 'canvas'
-        }
-    });
+    tank.components.classes.sigmajs = function() {
+        var s = new sigma({
+            renderer: {
+                container: document.getElementById('graph-container'),
+                type: 'canvas'
+            }
+        });
+
+        return s;
+    };
 
 }).call(this);
 ;(function (undefined) {
@@ -410,14 +427,20 @@ function executeQuery() {
      * The init function.
      */
     tank.panels.classes.config = function () {
-        // nothing to do
+        // init object by calling refresh method
+        var _self = this;
+        _self.refresh();
     };
 
     /**
      * The refresh function.
      */
     tank.panels.classes.config.prototype.refresh = function() {
-        // nothing to do
+        for(var key in tank.settings ) {
+            if (document.getElementById(key)) {
+                document.getElementById(key).value = tank.settings[key];
+            }
+        }
     };
 
     /**
@@ -428,7 +451,8 @@ function executeQuery() {
             for (var j = 0; j < document.getElementsByClassName('tank-settings').length; j++) {
                 var name = document.getElementsByClassName('tank-settings')[j].getAttribute('id');
                 var value = document.getElementsByClassName('tank-settings')[j].value;
-                tank.settings[name] = value;
+                tank.instance().settings[name] = value;
+                alert(tank.settings);
             }
         };
 
@@ -452,8 +476,12 @@ function executeQuery() {
     /**
      * The init function.
      */
-    tank.panels.classes.favorite = function () {
+    tank.panels.classes.favorite = function (tank) {
         this.list = [];
+
+        // init object by calling refresh method
+        var _self = this;
+        _self.refresh();
     };
 
     /**
@@ -462,8 +490,7 @@ function executeQuery() {
     tank.panels.classes.favorite.prototype.refresh = function () {
 
         var i = 0, html = '';
-
-        for (i; i >= 0; i--) {
+        for (i; i < this.list.length; i++) {
             html += "<li><a href=\"#\" class=\"favorite-query\" data-query-id=\"" + i + "\">" + this.list[i].display + "</a></li>";
         }
         document.getElementById('favorite-list').innerHTML = html;
@@ -482,22 +509,21 @@ function executeQuery() {
         // =======================
         document.getElementById('save').onclick = function () {
 
-            // adding the current query to the history
-            this.list.push({
-                query: tank.component.codemirror.getValue(),
-                display: tank.component.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
+            // adding the current query to favorite
+            tank.instance().panels.favorite.list.push({
+                query: tank.instance().components.codemirror.getValue(),
+                display: tank.instance().components.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
             });
 
-            this.refresh();
+            tank.instance().panels.favorite.refresh();
         };
 
         // Click on an favorite query
         // ===========================
         var onclick = function() {
             var id = this.getAttribute("data-query-id");
-            tank.component.codemirror.setValue(tank.panels.favorite.var.list[id].query);
-            // FIXME : change this method !!!
-            executeQuery();
+            tank.instance().components.codemirror.setValue(tank.instance().panels.favorite.list[id].query);
+            tank.instance().executeQuery();
         };
         for (var j = 0; j < document.getElementsByClassName('favorite-query').length; j++) {
 
@@ -519,9 +545,15 @@ function executeQuery() {
     /**
      * The init function.
      */
-    tank.panels.classes.graph  = function() {
+    tank.panels.classes.graph  = function(tank) {
         this.labels = [];
         this.types = [];
+
+        // init object by calling refresh method
+        var _self = this;
+
+        // When a query is executed, we save it into history
+        window.addEventListener( 'graph-data-loaded', _self.refresh, false );
     };
 
     /**
@@ -530,16 +562,15 @@ function executeQuery() {
     tank.panels.classes.graph.prototype.refresh = function() {
 
         // update stats data
-        document.getElementById('numberOfNode').innerHTML = '' + tank.component.sigma.graph.nodes().length;
-        document.getElementById('numberOfEdge').innerHTML = '' + tank.component.sigma.graph.edges().length;
+        document.getElementById('numberOfNode').innerHTML = '' + tank.components.sigmajs.graph.nodes().length;
+        document.getElementById('numberOfEdge').innerHTML = '' + tank.components.sigmajs.graph.edges().length;
 
         // update labels
-        sigma.neo4j.getLabels(tank.settings.server, tank.panels.graph.displayLabels);
+        sigma.neo4j.getLabels(tank.settings.server, tank.instance().panels.graph.displayLabels);
         // update types
-        sigma.neo4j.getTypes(tank.settings.server, tank.panels.graph.displayTypes);
+        sigma.neo4j.getTypes(tank.settings.server, tank.instance().panels.graph.displayTypes);
 
-        this.eventListener();
-
+        tank.instance().panels.graph.eventListener();
     };
 
     /**
@@ -551,26 +582,28 @@ function executeQuery() {
 
     /**
      * Function that display labels in graph panel.
+     * It is used as a cllback function for sigma.neo4j.getLabels.
      *
      * @param labels {Array of String}  Array of label
      */
-    tank.panels.classes.graph.prototype.displayLabels = function() {
+    tank.panels.classes.graph.prototype.displayLabels = function(labels) {
         var i = 0, html = '';
-        for (i; i < this.labels.length; i++) {
-            html += "<li>" + this.labels[i] + "</li>";
+        for (i; i < labels.length; i++) {
+            html += "<li>" + labels[i] + "</li>";
         }
         document.getElementById('labels').innerHTML = html;
     };
 
     /**
      * Function that display types in graph panel.
+     * It is used as a cllback function for sigma.neo4j.getTypes.
      *
      * @param types {Array of String}  Array of type
      */
-    tank.panels.classes.graph.prototype.displayTypes = function () {
+    tank.panels.classes.graph.prototype.displayTypes = function (types) {
         var i = 0, html = '';
-        for (i; i < this.types.length; i++) {
-            html += "<li>" + this.types[i] + "</li>";
+        for (i; i < types.length; i++) {
+            html += "<li>" + types[i] + "</li>";
         }
         document.getElementById('types').innerHTML = html;
     };
@@ -588,8 +621,18 @@ function executeQuery() {
     /**
      * The init function.
      */
-    tank.panels.classes.history = function () {
+    tank.panels.classes.history = function (tank) {
+        // the history heap
         this.list = [];
+
+        // init object by calling refresh method
+        var _self = this;
+        _self.refresh();
+
+        // When a query is executed, we save it into history
+        window.addEventListener( 'run-query', _self.execute, false );
+
+
     };
 
     /**
@@ -597,48 +640,34 @@ function executeQuery() {
      */
     tank.panels.classes.history.prototype.refresh = function () {
 
-        var i = (tank.panels.history.var.list.length - 1), html = '';
+        // Generate the HTML output of the history
+        var i = (this.list.length - 1), html = '';
         for (i; i >= 0; i--) {
             html += "<li>" +
-                "<span class=\"timeago\">" + tank.utils.timeago(tank.panels.history.var.list[i].time) + "</span>" +
-                "<a href=\"#\" class=\"history-query\" data-query-id=\"" + i + "\">" + tank.panels.history.var.list[i].display + "</a>" +
+                "<span class=\"timeago\">" + tank.utils.timeago(this.list[i].time) + "</span>" +
+                "<a href=\"#\" class=\"history-query\" data-query-id=\"" + i + "\">" + this.list[i].display + "</a>" +
                 "</li>";
         }
-
+        // Replace the current HTML
         document.getElementById('history-list').innerHTML = html;
 
-        tank.panels.history.eventListener();
+        // Refresh listener
+        this.eventListener();
     };
 
     /**
-     * The eventListerner function
+     * The eventListerner function.
      */
     tank.panels.classes.history.prototype.eventListener = function () {
-
-        // When we click on run
-        // =======================
-        document.getElementById('save').onclick = function () {
-
-            // adding the current query to the history
-            this.list.push({
-                query: tank.component.codemirror.getValue(),
-                display: tank.component.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
-            });
-
-            tank.panels.favorite.refresh();
-        };
 
         // Click on an history query
         // ===========================
         var onclick = function () {
             var id = this.getAttribute("data-query-id");
-            tank.component.codemirror.setValue(tank.panels.history.var.list[id].query);
-
-            // FIXME : change this method !!!
-            executeQuery();
+            tank.instance().components.codemirror.setValue(tank.panels.history.list[id].query);
+            tank.instance().executeQuery();
         };
         for (var j = 0; j < document.getElementsByClassName('history-query').length; j++) {
-
             document.getElementsByClassName('history-query')[j].onclick = onclick;
         }
 
@@ -646,20 +675,46 @@ function executeQuery() {
 
     /**
      * Function that add the current query to the history.
+     * It's a 'static' method,  so don't use this.
      */
     tank.panels.classes.history.prototype.execute = function () {
 
         // adding the current query to the history
-        this.list.push({
-            query: tank.component.codemirror.getValue(),
+        tank.instance().panels.history.list.push({
+            query: tank.instance().components.codemirror.getValue(),
             time: new Date(),
-            display: tank.component.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
+            display: tank.instance().components.codemirror.getWrapperElement().getElementsByClassName('CodeMirror-code')[0].innerHTML
         });
+        tank.instance().panels.history.refresh();
     };
 
 
 }).call(this);
 
+;(function (undefined) {
+    'use strict';
+
+    if (typeof tank === 'undefined')
+        throw 'tank is not declared';
+
+    // Create utils package
+    sigma.utils.pkg('tank.utils');
+
+    /**
+     * Function that generate a random color
+     *
+     * @returns {String}
+     */
+    tank.utils.randomcolor = function () {
+        var letters = '0123456789ABCDEF'.split('');
+        var color = '#';
+        for (var i = 0; i < 6; i++ ) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    };
+
+}).call(this);
 ;(function (undefined) {
     'use strict';
 
