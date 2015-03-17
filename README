@@ -150,9 +150,9 @@ RETURN t
 ```
 MATCH 
   (t:Type)-[:IS_DEFINED_IN]->(m:Module),
-  (t)-[:HAS_NAMESPACE]->(ns:Namespace)
+  (t)-[r:HAS_NAMESPACE]->(ns:Namespace)
 WHERE m.name="system-jahia"
-RETURN DISTINCT ns
+RETURN DISTINCT t,r,ns
 ```
 
  * Module dependencies : 

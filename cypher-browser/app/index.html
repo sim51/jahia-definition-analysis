@@ -21,7 +21,6 @@
     <script src="../node_modules/sigma/build/plugins/sigma.renderers.customShapes.min.js"></script>
     <script src="../node_modules/sigma/build/plugins/sigma.statistics.HITS.min.js"></script> -->
     <!-- END SIGMA IMPORTS -->
-    <script src="./build/js/sigma.parsers.cypher.js"></script>
 
     <!-- Code mirror-->
     <link href="../node_modules/codemirror/lib/codemirror.css" rel="stylesheet">
@@ -98,9 +97,9 @@
                     <a class="tabsheet-link" href="#"><i class="fa fa-cogs fa-2x"></i></a>
                     <div class="tabsheet">
                         <label for="server">Server URL</label>
-                        <input id="server" type="text" class="form-control" placeholder="http://localhost:7474" value="http://localhost:7474">
+                        <input id="server" type="text" class="tank-settings form-control" placeholder="http://localhost:7474" value="http://localhost:7474">
                         <label for="forceAtlas2Time">Force Atlas time</label>
-                        <input id="forceAtlas2Time" type="range" class="form-control" min="1000" max="60000" step="1000" value="5000">
+                        <input id="forceAtlas2Time" type="range" class="tank-settings form-control" min="1000" max="60000" step="1000" value="5000">
                     </div>
                 </li>
             </ul>
@@ -130,8 +129,13 @@
     </div>
 </footer>
 
-<script src="./build/js/app.js"></script>
-
+<script src="./build/js/main.js"></script>
+<script>
+    /**
+     * When document is ready , we initialize the application.
+     */
+        new tank();
+</script>
 </body>
 </html>
 

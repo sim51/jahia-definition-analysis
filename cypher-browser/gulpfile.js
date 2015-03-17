@@ -18,7 +18,7 @@ application = {
     },
     js : {
         src : ['./app/js/**/*.js'],
-        dest : "./app/build/js"
+        dest : "./app/build/js/"
     }
 };
 
@@ -57,7 +57,7 @@ gulp.task('less', function() {
  */
 gulp.task('js', function(){
     gulp.src(application.js.src)
-        //.pipe(concat(application.js.dest))
+        .pipe(concat('main.js'))
         //.pipe(uglify())
         .pipe(gulp.dest(application.js.dest));
 });

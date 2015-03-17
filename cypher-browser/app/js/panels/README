@@ -1,0 +1,8 @@
+# Panel definition
+
+* A panel must be into the 'tank.panels' package'
+* A panel must have those functions
+    * init()
+    * refresh()
+    * eventListener()
+* By convention, all variables must be into a subpackage named 'var'
