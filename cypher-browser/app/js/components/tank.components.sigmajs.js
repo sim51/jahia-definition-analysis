@@ -9,6 +9,8 @@
 
     // init sigmajs
     tank.components.classes.sigmajs = function() {
+
+        // new instance of sigma
         var s = new sigma({
             renderer: {
                 container: document.getElementById('graph-container'),

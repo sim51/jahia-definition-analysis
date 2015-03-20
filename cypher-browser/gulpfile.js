@@ -37,7 +37,9 @@ gulp.task("build", ["clean","less", "js"]);
  * JS Hint task.
  */
 gulp.task('jshint', function() {
-    gulp.src(application.js.src)
+    var jsSrc = application.js.src;
+    jsSrc.push('!./app/js/lib/**/*.js');
+    gulp.src(jsSrc)
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
@@ -78,11 +80,10 @@ gulp.task('watch', function() {
     gulp.src(application.js.src, { read: false})
         .pipe(watch({ emit: 'all' }, function(files) {
             gulp.run("js");
-
+            gulp.run("jshint");
             files
                 .pipe(jshint())
-                .pipe(connect.reload())
-                .pipe(jshint.reporter('default'));
+                .pipe(connect.reload());
         }));
 
     gulp.src(application.less.src, { read: false})

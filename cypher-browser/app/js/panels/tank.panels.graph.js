@@ -29,6 +29,15 @@
     tank.panels.classes.graph.prototype.refresh = function () {
         var i, j, label, node, nodes, edge, edges, type;
 
+        // reset counter
+        for (i in tank.instance().panels.graph.labels) {
+            tank.instance().panels.graph.labels[i].count = 0;
+        }
+        // reset counter
+        for (i in tank.instance().panels.graph.types) {
+            tank.instance().panels.graph.types[i].count = 0;
+        }
+
         // update labels
         nodes = tank.instance().components.sigmajs.graph.nodes();
         for (i in tank.instance().components.sigmajs.graph.nodes()) {
@@ -79,26 +88,27 @@
      * The eventListerner function.
      */
     tank.panels.classes.graph.prototype.eventListener = function () {
+        var j,id;
 
         // Change color on a type
         // ===========================
         var onChangeColorType = function () {
-            var id = this.getAttribute("data-type");
-            tank.instance().panels.graph.labels[id].color = '#' + this.value;
+            id = this.getAttribute("data-type");
+            tank.instance().panels.graph.types[id].color = '#' + this.value;
         };
-        for (var j = 0; j < document.getElementsByClassName('color types').length; j++) {
+        for (j = 0; j < document.getElementsByClassName('color types').length; j++) {
             document.getElementsByClassName('color types')[j].onchange = onChangeColorType;
         }
 
         // Change color on a label
         // ===========================
         var onChangeColorLabel = function () {
-            var id = this.getAttribute("data-label");
+            id = this.getAttribute("data-label");
             tank.instance().panels.graph.labels[id].color = '#' + this.value;
         };
-        for (var j = 0; j < document.getElementsByClassName('color labels').length; j++) {
+        for (j = 0; j < document.getElementsByClassName('color labels').length; j++) {
             document.getElementsByClassName('color labels')[j].onchange = onChangeColorLabel;
-        };
+        }
     };
 
     /**

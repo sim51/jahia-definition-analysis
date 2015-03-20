@@ -119,7 +119,7 @@
             for (j in tank.instance().panels.graph.types) {
                 type = tank.instance().panels.graph.types[j];
                 if(edge.type === type.name) {
-                    type.color = type.color;
+                    edge.color = type.color;
                 }
             }
 
