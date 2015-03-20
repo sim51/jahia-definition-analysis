@@ -82,6 +82,62 @@
      * @param g {Graph} The graph object representation
      */
     tank.prototype.onGraphDataLoaded = function(s, g) {
+
+        // if graph component is loaded, then we parse the graph to construct some stat
+        if(tank.instance().panels.graph) {
+            tank.instance().panels.graph.refresh();
+        }
+
+        var i, j, node, edge, field, label, type;
+        // Change node label
+        for (i in s.graph.nodes()) {
+            node = s.graph.nodes()[i];
+
+            // changing color
+            for (j in tank.instance().panels.graph.labels) {
+                label = tank.instance().panels.graph.labels[j];
+                if(node.labels[0] === label.name) {
+                    node.color = label.color;
+                }
+            }
+
+            // changing label
+            for(j in tank.instance().settings.field_named) {
+                field = tank.instance().settings.field_named[j];
+                if(node[field]) {
+                    node.label = node[field];
+                    break;
+                }
+            }
+        }
+
+        // Change edge label
+        for (i in s.graph.edges()) {
+            edge = s.graph.edges()[i];
+
+            // changing color
+            for (j in tank.instance().panels.graph.types) {
+                type = tank.instance().panels.graph.types[j];
+                if(edge.type === type.name) {
+                    type.color = type.color;
+                }
+            }
+
+            // changing label
+            for(j in tank.instance().settings.field_named) {
+                field = tank.instance().settings.field_named[j];
+                if(edge[field]) {
+                    edge.label = edge[field];
+                    break;
+                }
+            }
+        }
+
+
+        // Modify graph datas
+        tank.instance().overrideGraphData(s);
+
+        // starting forceatlas2 algo
         s.startForceAtlas2({
             linLogMode: false,
             outboundAttractionDistribution: false,
@@ -96,13 +152,23 @@
             startingIterations: 1,
             iterationsPerRender: 1
         });
-        s.refresh();
+
+        // setting the timeout
         window.setTimeout(function() {
             tank.components.sigmajs.stopForceAtlas2();
         }, tank.settings.forceAtlas2Time, s);
 
         // Dispatch the 'run-query' event
         window.dispatchEvent(new Event("graph-data-loaded"));
+    };
+
+    /**
+     * Function that change the sigma graph data and refresh the graph.
+     * If sigma instance is null, we take the tank one.
+     *
+     * @param {Sigma} s     a sigma instance
+     */
+    tank.prototype.overrideGraphData = function(s) {
     };
 
     /**

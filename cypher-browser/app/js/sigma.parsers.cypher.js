@@ -104,7 +104,7 @@
                 sigmaNode.labels = node.labels;
                 sigmaNode.x = Math.random();
                 sigmaNode.y = Math.random();
-                sigmaNode.size = 0;
+                sigmaNode.size = 1;
                 sigmaNode.color = '#000000';
 
                 if (sigmaNode.id in nodesMap) {
@@ -119,6 +119,7 @@
                 var sigmaEdge = edge.properties;
                 sigmaEdge.id = edge.id;
                 sigmaEdge.type = edge.type;
+                sigmaEdge.label = edge.type;
                 sigmaEdge.source = edge.startNode;
                 sigmaEdge.target = edge.endNode;
                 sigmaEdge.color = '#7D7C8E';
