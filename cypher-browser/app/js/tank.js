@@ -70,6 +70,23 @@
             this.onGraphDataLoaded
         );
 
+        // drag node
+        // Initialize the dragNodes plugin:
+        var dragListener = sigma.plugins.dragNodes(tank.components.sigmajs, tank.components.sigmajs.renderers[0]);
+
+        dragListener.bind('startdrag', function(event) {
+            console.log(event);
+        });
+        dragListener.bind('drag', function(event) {
+            console.log(event);
+        });
+        dragListener.bind('drop', function(event) {
+            console.log(event);
+        });
+        dragListener.bind('dragend', function(event) {
+            console.log(event);
+        });
+
         // Dispatch the 'run-query' event
         window.dispatchEvent(new Event("run-query"));
 
@@ -97,7 +114,7 @@
             for (j in tank.instance().panels.graph.labels) {
                 label = tank.instance().panels.graph.labels[j];
                 if(node.labels[0] === label.name) {
-                    node.color = label.color;
+                    node['colors'] = ["#ECD078","#D95B43","#C02942","#542437","#53777A"];
                 }
             }
 

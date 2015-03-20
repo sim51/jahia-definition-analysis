@@ -19,6 +19,7 @@
         "sigma": "^1.0.3",
         "bootstrap": "^3.3.2",
         "codemirror": "^5.0.0",
-        "font-awesome" : "^4.3.0"
+        "font-awesome" : "^4.3.0",
+        "linkurious" : "git://github.com/Linkurious/linkurious.js.git#master"
     }
 }

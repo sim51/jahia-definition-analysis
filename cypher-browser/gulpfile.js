@@ -37,9 +37,7 @@ gulp.task("build", ["clean","less", "js"]);
  * JS Hint task.
  */
 gulp.task('jshint', function() {
-    var jsSrc = application.js.src;
-    jsSrc.push('!./app/js/lib/**/*.js');
-    gulp.src(jsSrc)
+    gulp.src(application.js.src)
         .pipe(jshint())
         .pipe(jshint.reporter('default'));
 });
