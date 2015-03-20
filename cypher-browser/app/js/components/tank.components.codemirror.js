@@ -30,6 +30,9 @@
             },
             false
         );
+        editor.on('change', function(cm, obj){
+            tank.instance().query = cm.getValue();
+        });
         return editor;
     };
 

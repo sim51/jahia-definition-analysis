@@ -462,6 +462,9 @@
             },
             false
         );
+        editor.on('change', function(cm, obj){
+            tank.instance().query = cm.getValue();
+        });
         return editor;
     };
 
@@ -515,6 +518,7 @@
                 document.getElementById(key).value = tank.settings[key];
             }
         }
+        this.eventListener();
     };
 
     /**
@@ -526,11 +530,10 @@
                 var name = document.getElementsByClassName('tank-settings')[j].getAttribute('id');
                 var value = document.getElementsByClassName('tank-settings')[j].value;
                 tank.instance().settings[name] = value;
-                alert(tank.settings);
             }
         };
 
-        // when sconfig value change, we reinit setting
+        // when config value change, we reinit setting
         for (var j = 0; j < document.getElementsByClassName('tank-settings').length; j++) {
             document.getElementsByClassName('tank-settings')[j].onchange = onclick;
         }
